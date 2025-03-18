@@ -1,11 +1,11 @@
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
-public class CLIFrontend {
+public class CLIFrontEnd {
     private Scanner scanner;
     private String userId;
 
-    public CLIFrontend() {
+    public CLIFrontEnd() {
         scanner = new Scanner(System.in);
     }
 
@@ -14,12 +14,13 @@ public class CLIFrontend {
         System.out.print("Enter your ID: ");
 
         userId = scanner.nextLine();
-        
+
         showMenu();
 
     }
+
     public void showMenu() {
-        while(true) {
+        while (true) {
             System.out.println("\nCLI Message Board Menu");
             System.out.println("1. Send a Message");
             System.out.println("2. View Active Members");
@@ -37,7 +38,7 @@ public class CLIFrontend {
                 continue;
             }
 
-            switch(choice){
+            switch (choice) {
                 case 1:
                     sendMessage();
                     break;
@@ -54,26 +55,29 @@ public class CLIFrontend {
         }
 
     }
-    private void sendMessage(){
+
+    private void sendMessage() {
         System.out.println("Enter Message: ");
         String message = scanner.nextLine();
         System.out.println("(Simulated) Message sent: " + message);
     }
+
     private void viewMembers() {
         System.out.println("(Stimulated) Active Members: User1, User2, User3");
     }
+
     private void exit() {
         System.out.print("Are you sure you want to exit? (y/n)");
         String confirmExit = scanner.nextLine();
-        if (confirmExit.equalsIgnoreCase("y")){
+        if (confirmExit.equalsIgnoreCase("y")) {
             System.out.println("Exiting... Goodbye!");
-        }
-        else {
+        } else {
             System.out.println("Resuming...");
         }
     }
-    public static void main(String[] args){
-        CLIFrontend cli = new CLIFrontend();
+
+    public static void main(String[] args) {
+        CLIFrontEnd cli = new CLIFrontEnd();
         cli.start();
     }
 }
