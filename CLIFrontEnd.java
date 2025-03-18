@@ -59,7 +59,7 @@ public class CLIFrontEnd {
     private void sendMessage() {
         System.out.println("Enter Message: ");
         String message = scanner.nextLine();
-        System.out.println("(Simulated) Message sent: " + message);
+        System.out.println("(Simulated) Message sent: " + userID + " says: " + message);
     }
 
     private void viewMembers() {
