@@ -70,14 +70,14 @@ public class CLIFrontEnd {
         userPassword = scanner.nextLine();
 
         if (addAccount(userId, userPassword)) {
-            System.out.println("Account created successfully! You can now log in.");
+            System.out.println("Account created successfully! You may log in.");
             start();
         } else {
             System.out.println("Error: Could not create account.");
         }
     }
 
-    private boolean addAccount(String id, String password) {
+    private boolean addAccount(String id, String password) { //AI added
         try (FileWriter writer = new FileWriter(ACCOUNT_FILE, true)) {
             writer.write(id + "," + password + ",false\n");
             return true;
@@ -85,7 +85,7 @@ public class CLIFrontEnd {
             System.err.println("Error writing to accounts file: " + e.getMessage());
         }
         return false;
-    }
+    }//no longer AI
 
     private void updateLoginStatus(String id, boolean status) {
         List<String> lines = new ArrayList<>();
