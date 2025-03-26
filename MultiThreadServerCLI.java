@@ -1,5 +1,7 @@
 package cliclient;
 
+// not completed yet - just posting it to save later
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
