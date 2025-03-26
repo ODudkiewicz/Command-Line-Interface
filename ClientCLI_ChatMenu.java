@@ -4,128 +4,154 @@ import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 
-public class ClientCLI {
-    private PrintWriter writer;
-    private BufferedReader reader;
+public class ClientCLI{
+    private PrintWriter p_writer;
+    private BufferedReader b_reader;
     private Socket socket;
     private Scanner scanner;
+    private String userID;
 
-    public ClientCLI() {
+    public ClientCLI(){
         scanner = new Scanner(System.in);
     }
-
-    public void contactServer() {
-        try {
+    public void contactServer(){
+        try{
             socket = new Socket("127.0.0.1", 2000);
-            writer = new PrintWriter(socket.getOutputStream(), true);
-            reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            p_writer = new PrintWriter(socket.getOutputStream(), true);
+            b_reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            System.out.println("Connected to server.");
+            System.out.println("Connected to the server");
             loginOrSignup();
         } catch (IOException e) {
             System.err.println("Error connecting to server: " + e.getMessage());
+
         }
     }
 
     private void loginOrSignup() {
-        System.out.print("Do you want to (1) Log in or (2) Sign up? Enter choice: ");
-        int choice = scanner.nextInt();
+        System.out.println("Log in / Sign Up Menu: \n");
+        System.out.print("Do you want to (1) Log in or (2) Sign up? : ");
+        int option = scanner.nextInt();
         scanner.nextLine();
-
-        if (choice == 1) {
-            System.out.print("Enter your student ID: ");
-            String userId = scanner.nextLine();
-            System.out.print("Enter your password: ");
+        if(option == 1){
+            System.out.print("Enter your student ID here:");
+            String userID = scanner.nextLine();
+            System.out.print("Enter your password here: ");
             String password = scanner.nextLine();
-            writer.println("LOGIN," + userId + "," + password);
-        } else if (choice == 2) {
-            System.out.print("Choose a new ID: ");
-            String newUserId = scanner.nextLine();
-            System.out.print("Choose a new password: ");
+            p_writer.println("LOGIN, " + userID + "," + password);
+
+        }else if (option == 2){
+            System.out.print("Enter your Student ID here: ");
+            String newUserID = scanner.nextLine();
+            System.out.print("Enter your new password: ");
             String newPassword = scanner.nextLine();
-            writer.println("SIGNUP," + newUserId + "," + newPassword);
-            loginOrSignup();
-        } else {
-            System.out.println("Invalid choice.");
+            p_writer.println("SIGNUP, " + newUserID + "," + newPassword);
+        }else{
+            System.out.println("Invalid option");
             loginOrSignup();
         }
 
         receiveResponse();
     }
-
     private void receiveResponse() {
-        try {
-            String response = reader.readLine();
+        try{
+            String response = b_reader.readLine();
             System.out.println("Server Response: " + response);
-        } catch (IOException e) {
-            System.err.println("Error reading response from server: " + e.getMessage());
+        } catch(IOException e) {
+            System.err.println("Error reading response from the server... " + e.getMessage());
         }
     }
 
-    public void sendText() {
-        if (writer == null) {
+    public void sendPrivateMessage() {
+        if (p_writer == null)
+        {
+            System.out.println("Not connected to server.");
+            return;
+        }
+        System.out.print("Enter the client's username (or type 'exit' to return to menu): ");
+        String recipient = scanner.nextLine();
+
+        if(recipient.equalsIgnoreCase("exit")) {
+            System.out.println("Reeturning to menu....");
+            return;
+        }
+
+        System.out.println("Enter your message (type 'exit' to cancel the process): ");
+        while (true) {
+            String message = scanner.nextLine();
+            if(message.equalsIgnoreCase("exit")){
+                System.out.println("Message process cancelled. Returning to menu... ");
+                break;
+            }
+            p_writer.println("[PRIVATE] " + userID + " -> " + recipient + ": " + message);
+            System.out.println("Private message sent to: " + recipient + ".");
+        }
+
+
+    }
+    public void requestPrivateReadMessages() {
+        if (p_writer == null) {
             System.out.println("Not connected to server.");
             return;
         }
 
+        System.out.println("Your Private Messages:\n");
+        
+        while (true) { // Keep reading until "exit"
+            String message = scanner.nextLine();
+            
+            if (message.equalsIgnoreCase("exit")) {
+                System.out.println("Returning to main menu...");
+                break; // Exit loop and return to menu
+            }
+            
+            p_writer.println(message); // Send message
+        }
+    }
+    public void sendText() {
+        if(p_writer == null){
+            System.out.println("Not connected to server.");
+            return;
+        }
         System.out.print("Enter recipient (or type 'everyone' for global message): ");
         String recipient = scanner.nextLine();
 
-        System.out.println("Enter text to send (type 'exit' to stop):");
-        while (true) {
+        System.out.println("Enter text to send (type 'exit' to stop): ");
+        while(true) {
             String line = scanner.nextLine();
-            if (line.equalsIgnoreCase("exit")) {
+            if(line.equalsIgnoreCase("exit")){
                 break;
             }
-            writer.println("MESSAGE," + recipient + "," + line);
+            p_writer.println("MESSAGE, " + recipient + "," + line);
         }
     }
 
     public void requestActiveMembers() {
-        if (writer == null) {
-            System.out.println("Not connected to server.");
+        if(p_writer == null){
+            System.out.println("Not connect to server.");
             return;
         }
-
-        writer.println("ACTIVE_MEMBERS");
+        p_writer.println("ACTIVE_MEMBERS");
         System.out.println("Requesting active members...");
     }
 
+
+
     public void requestReadMessages() {
-        if (writer == null) {
+        if (p_writer == null) {
             System.out.println("Not connected to server.");
             return;
         }
 
-        writer.println("READ_MESSAGES");
+        p_writer.println("READ_MESSAGES");
         System.out.println("Requesting stored messages...");
     }
-    public void requestPrivateReadMessages()
-	{
-		if(writer == null) {
-			System.out.println("Not connected to server.");
-			return;
-		}
-		
-		writer.println("READ_PRIVATE_MESSAGES");
-		try {
-			String response;
-			System.out.println("Your Private Messages: ");
-			while((response = reader.readLine()) != null) {
-				if (response.equals("END_OF_MESSAGES")) break;
-				System.out.println(response);
-			}
-		}catch(IOException e) {
-			System.err.println("Error reading private messages.");
-		}
-		System.out.println("Requesting stored private messages...");
-	}
 
     public void receiveMessages() {
         new Thread(() -> {
             try {
                 String message;
-                while ((message = reader.readLine()) != null) {
+                while ((message = b_reader.readLine()) != null) {
                     if (message.startsWith("ACTIVE_MEMBERS:")) {
                         System.out.println("\n Active Members: " + message.substring(15));
                     } else if (message.startsWith("STORED_MESSAGES:")) {
@@ -141,6 +167,7 @@ public class ClientCLI {
         }).start();
     }
     
+    
 
     public void showMenu() {
         while (true) {
@@ -148,7 +175,8 @@ public class ClientCLI {
             System.out.println("1. Send a Message");
             System.out.println("2. View Active Members");
             System.out.println("3. Read Messages");
-            System.out.println("4. Exit");
+            System.out.println("4. Private Message");
+            System.out.println("5. Exit");
             System.out.print("Choose an option: ");
 
             int choice = scanner.nextInt();
@@ -165,6 +193,8 @@ public class ClientCLI {
                     requestReadMessages();
                     break;
                 case 4:
+                	sendPrivateMessage();
+                case 5:
                     System.out.println("Exiting...");
                     closeConnection();
                     return;
@@ -183,6 +213,10 @@ public class ClientCLI {
         } catch (IOException e) {
             System.err.println("Error closing connection: " + e.getMessage());
         }
+    }
+    
+    public void exit() {
+    	
     }
 
     public static void main(String[] args) {
