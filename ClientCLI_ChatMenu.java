@@ -1,8 +1,12 @@
-package clientserver;
+package cliclient;
 
 import java.io.*;
+
 import java.net.*;
 import java.util.Scanner;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class ClientCLI{
     private PrintWriter p_writer;
@@ -10,6 +14,13 @@ public class ClientCLI{
     private Socket socket;
     private Scanner scanner;
     private String userID;
+    private String password;
+    private static String coordinatorId = null;
+    private static boolean CoordinatorConfirmedMessage = false;
+    private static String getTimeStamp() {
+    	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    	return LocalDateTime.now().format(formatter);
+    }
 
     public ClientCLI(){
         scanner = new Scanner(System.in);
@@ -35,10 +46,10 @@ public class ClientCLI{
         scanner.nextLine();
         if(option == 1){
             System.out.print("Enter your student ID here:");
-            String userID = scanner.nextLine();
+            this.userID = scanner.nextLine();
             System.out.print("Enter your password here: ");
-            String password = scanner.nextLine();
-            p_writer.println("LOGIN, " + userID + "," + password);
+            this.password = scanner.nextLine();
+            p_writer.println("LOGIN, " + this.userID + "," + this.password);
 
         }else if (option == 2){
             System.out.print("Enter your Student ID here: ");
@@ -49,6 +60,10 @@ public class ClientCLI{
         }else{
             System.out.println("Invalid option");
             loginOrSignup();
+        }
+        
+        if(this.userID .trim().isEmpty() || this.password.trim().isEmpty()) {
+        	System.err.println("ERROR: Login failed due to missing input.");
         }
 
         receiveResponse();
@@ -72,7 +87,7 @@ public class ClientCLI{
         String recipient = scanner.nextLine();
 
         if(recipient.equalsIgnoreCase("exit")) {
-            System.out.println("Reeturning to menu....");
+            System.out.println("Returning to menu....");
             return;
         }
 
@@ -83,7 +98,7 @@ public class ClientCLI{
                 System.out.println("Message process cancelled. Returning to menu... ");
                 break;
             }
-            p_writer.println("[PRIVATE] " + userID + " -> " + recipient + ": " + message);
+            p_writer.println("[PRIVATE] " + this.userID + " -> " + recipient + ": " + message);
             System.out.println("Private message sent to: " + recipient + ".");
         }
 
@@ -97,15 +112,15 @@ public class ClientCLI{
 
         System.out.println("Your Private Messages:\n");
         
-        while (true) { 
+        while (true) { // Keep reading until "exit"
             String message = scanner.nextLine();
             
             if (message.equalsIgnoreCase("exit")) {
                 System.out.println("Returning to main menu...");
-                break; 
+                break; // Exit loop and return to menu
             }
             
-            p_writer.println(message); 
+            p_writer.println(message); // Send message
         }
     }
     public void sendText() {
@@ -113,7 +128,7 @@ public class ClientCLI{
             System.out.println("Not connected to server.");
             return;
         }
-        System.out.print("Enter a client's student ID (or type 'everyone' for global message) to chat: ");
+        System.out.print("Enter recipient (or type 'everyone' for global message): ");
         String recipient = scanner.nextLine();
 
         System.out.println("Enter text to send (type 'exit' to stop): ");
@@ -152,13 +167,27 @@ public class ClientCLI{
             try {
                 String message;
                 while ((message = b_reader.readLine()) != null) {
-                    if (message.startsWith("ACTIVE_MEMBERS:")) {
+                	String timestamp = getTimeStamp();
+                	if (message.startsWith("YOU_ARE_COORDINATOR")) {
+                    	if(message.length() > 20) {
+                    		coordinatorId = message.substring(20).trim();
+                    	}
+                    	if(!CoordinatorConfirmedMessage) {
+                    		System.out.println("You are the coordinator now");
+                    		CoordinatorConfirmedMessage = true;
+                    	}
+                    }else if(message.startsWith("NEW_COORDINATOR: ")) {
+                    	coordinatorId = message.substring(16).trim();
+                    	System.out.println("The new coordinator is: " + coordinatorId);
+                    } 
+                    else if (message.startsWith("ACTIVE_MEMBERS:")) {
                         System.out.println("\n Active Members: " + message.substring(15));
                     } else if (message.startsWith("STORED_MESSAGES:")) {
                         System.out.println("\n Stored Messages:\n" + message.substring(16));
                     } else {
-                        System.out.println("\n New Message: " + message);
+                    	System.out.println(timestamp + " -- " + message);
                     }
+                	
                     System.out.print("> ");
                 }
             } catch (IOException e) {
@@ -171,7 +200,8 @@ public class ClientCLI{
 
     public void showMenu() {
         while (true) {
-            System.out.println("\nCLI Chat Menu");
+            System.out.println("\nCLI Chat Menu\n");
+            
             System.out.println("1. Send a Message");
             System.out.println("2. View Active Members");
             System.out.println("3. Read Messages");
@@ -202,6 +232,11 @@ public class ClientCLI{
                 default:
                     System.out.println("Invalid input. Try again.");
             }
+            try {
+            	Thread.sleep(1000);
+            }catch (InterruptedException e) {
+            	e.printStackTrace();
+            }
         }
     }
 
@@ -216,6 +251,10 @@ public class ClientCLI{
         }
     }
     
+    public void exit() {
+    	
+    }
+
     public static void main(String[] args) {
         ClientCLI client = new ClientCLI();
         client.contactServer();
