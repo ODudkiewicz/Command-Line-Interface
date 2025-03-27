@@ -1,4 +1,7 @@
+package cliclient;
+
 import java.io.*;
+
 import java.net.*;
 import java.util.Scanner;
 
@@ -50,17 +53,18 @@ public class ClientCLI{
 
         }else if (option == 2){
             System.out.print("Enter your Student ID here: ");
-            String newUserID = scanner.nextLine();
+            this.userID = scanner.nextLine();
             System.out.print("Enter your new password: ");
-            String newPassword = scanner.nextLine();
-            p_writer.println("SIGNUP, " + newUserID + "," + newPassword);
+            this.password = scanner.nextLine();
+            p_writer.println("SIGNUP, " + this.userID + "," + this.password);
         }else{
             System.out.println("Invalid option");
             loginOrSignup();
         }
         
-        if(this.userID .trim().isEmpty() || this.password.trim().isEmpty()) {
+        if(this.userID.isEmpty() || this.password.isEmpty()) {
         	System.err.println("ERROR: Login failed due to missing input.");
+        	return;
         }
 
         receiveResponse();
@@ -96,7 +100,7 @@ public class ClientCLI{
                 break;
             }
             p_writer.println("[PRIVATE] " + this.userID + " -> " + recipient + ": " + message);
-            System.out.println("Private message sent to: " + recipient + ".");
+            System.out.println("Private message sent to: " + "user" + recipient + ".");
         }
 
 
