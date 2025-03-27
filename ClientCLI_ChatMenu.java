@@ -97,15 +97,15 @@ public class ClientCLI{
 
         System.out.println("Your Private Messages:\n");
         
-        while (true) { // Keep reading until "exit"
+        while (true) { 
             String message = scanner.nextLine();
             
             if (message.equalsIgnoreCase("exit")) {
                 System.out.println("Returning to main menu...");
-                break; // Exit loop and return to menu
+                break; 
             }
             
-            p_writer.println(message); // Send message
+            p_writer.println(message); 
         }
     }
     public void sendText() {
