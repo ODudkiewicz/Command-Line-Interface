@@ -1,4 +1,4 @@
-package cliclient;
+package clientserver;
 
 import java.io.*;
 import java.net.*;
@@ -113,7 +113,7 @@ public class ClientCLI{
             System.out.println("Not connected to server.");
             return;
         }
-        System.out.print("Enter recipient (or type 'everyone' for global message): ");
+        System.out.print("Enter a client's student ID (or type 'everyone' for global message) to chat: ");
         String recipient = scanner.nextLine();
 
         System.out.println("Enter text to send (type 'exit' to stop): ");
@@ -194,6 +194,7 @@ public class ClientCLI{
                     break;
                 case 4:
                 	sendPrivateMessage();
+                	break;
                 case 5:
                     System.out.println("Exiting...");
                     closeConnection();
@@ -215,10 +216,6 @@ public class ClientCLI{
         }
     }
     
-    public void exit() {
-    	
-    }
-
     public static void main(String[] args) {
         ClientCLI client = new ClientCLI();
         client.contactServer();
