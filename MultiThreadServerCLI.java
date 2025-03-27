@@ -1,6 +1,5 @@
-package clientserver;
+package cliclient;
 
-// not completed yet - just posting it to save later
 
 import java.io.*;
 import java.net.*;
@@ -9,7 +8,8 @@ import java.util.*;
 public class MultiThreadServerCLI {
     private static final int PORT = 2000;
     private static Map<String, PrintWriter> activeUsers = new HashMap<>();
-    private static final String CHAT_HISTORY_FILE = "chat.csv";
+    private static final String CHAT_LOGS = "chat.csv";
+    private static String coordinatorId = null;
 
     public static void main(String[] args) {
         System.out.println("Server running on port " + PORT + "...");
@@ -23,8 +23,26 @@ public class MultiThreadServerCLI {
             System.err.println("Server error: " + e.getMessage());
         }
     }
+    
+    
+    public static synchronized void setCoordinator() {
+    	if (activeUsers.isEmpty()) {
+    		coordinatorId = null;
+    	}else {
+    		coordinatorId = activeUsers.keySet().iterator().next();
+    		activeUsers.get(coordinatorId).println("YOU_ARE_COORDINATOR");
+    	}
+        notifyCoordinator();
+    }
+    
+    public static synchronized void notifyCoordinator() {
+    	for(PrintWriter pw : activeUsers.values())
+    	{
+    		pw.println("NEW COORDINATOR: " + (coordinatorId != null ? coordinatorId: "None"));
+    	}
+    }
 
-    private static class ClientHandler extends Thread {
+    public static class ClientHandler extends Thread {
         private Socket socket;
         private PrintWriter writer;
         private BufferedReader reader;
@@ -47,6 +65,8 @@ public class MultiThreadServerCLI {
 
                 activeUsers.put(userId, writer);
                 System.out.println(userId + " connected.");
+                setCoordinator();
+            
 
                 String input;
                 while ((input = reader.readLine()) != null) {
@@ -57,6 +77,9 @@ public class MultiThreadServerCLI {
             } finally {
                 if (userId != null) {
                     activeUsers.remove(userId);
+                    if(userId.equals(coordinatorId)) {
+                    	setCoordinator();
+                    }
                 }
                 try {
                     socket.close();
@@ -68,6 +91,7 @@ public class MultiThreadServerCLI {
         }
 
         private String authenticateUser() throws IOException {
+        	
             String credentials = reader.readLine();
             if (credentials == null) return null;
 
@@ -171,7 +195,7 @@ public class MultiThreadServerCLI {
 
         private void sendStoredMessages() {
             StringBuilder messages = new StringBuilder();
-            try (BufferedReader fileReader = new BufferedReader(new FileReader(CHAT_HISTORY_FILE))) {
+            try (BufferedReader fileReader = new BufferedReader(new FileReader(CHAT_LOGS))) {
                 String line;
                 while ((line = fileReader.readLine()) != null) {
                     messages.append(line).append("\n");
@@ -182,7 +206,7 @@ public class MultiThreadServerCLI {
             writer.println("STORED_MESSAGES:" + messages.toString());
         }
         private void sendPrivateMessages() {
-        	try (BufferedReader fileReader = new BufferedReader(new FileReader(CHAT_HISTORY_FILE))){
+        	try (BufferedReader fileReader = new BufferedReader(new FileReader(CHAT_LOGS))){
         		String line;
         		while((line = fileReader.readLine()) != null) {
         			if (line.contains("-> " + userId + ":")) {
@@ -196,7 +220,7 @@ public class MultiThreadServerCLI {
         }
 
         private void saveMessage(String sender, String recipient, String message) {
-            try (BufferedWriter fileWriter = new BufferedWriter(new FileWriter(CHAT_HISTORY_FILE, true))) {
+            try (BufferedWriter fileWriter = new BufferedWriter(new FileWriter(CHAT_LOGS, true))) {
                 fileWriter.write(sender + " -> " + recipient + ": " + message);
                 fileWriter.newLine();
             } catch (IOException e) {
@@ -215,3 +239,4 @@ public class MultiThreadServerCLI {
         }
     }
 }
+
