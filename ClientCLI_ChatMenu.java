@@ -1,5 +1,3 @@
-package cliclient;
-
 import java.io.*;
 
 import java.net.*;
