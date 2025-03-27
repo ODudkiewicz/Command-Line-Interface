@@ -1,4 +1,4 @@
-package cliclient;
+package clientserver;
 
 // not completed yet - just posting it to save later
 
@@ -63,6 +63,7 @@ public class MultiThreadServerCLI {
                 } catch (IOException e) {
                     System.err.println("Error closing socket.");
                 }
+                cleanup();
             }
         }
 
@@ -119,7 +120,7 @@ public class MultiThreadServerCLI {
         }
 
         private void processClientRequest(String request) {
-            if (request.startsWith("MESSAGE,")) {
+            if (request.startsWith("MESSAGE, ")) {
                 processMessage(request);
             } else if (request.equals("ACTIVE_MEMBERS")) {
                 sendActiveMembers();
@@ -139,16 +140,28 @@ public class MultiThreadServerCLI {
 
             saveMessage(userId, recipient, message);
 
-            if (recipient.equals("everyone")) {
-                for (PrintWriter pw : activeUsers.values()) {
-                    pw.println(userId + ": " + message);
-                }
+            if ("everyone".equalsIgnoreCase(recipient.trim())) {
+            	broadcastMessage(userId + ": " + message);
+            	
             } else {
-                PrintWriter recipientWriter = activeUsers.get(recipient);
-                if (recipientWriter != null) {
-                    recipientWriter.println(userId + ": " + message);
-                }
+            	sendPrivateMessage(userId,recipient, message);
             }
+        }
+        private void broadcastMessage(String message) {
+        	for (PrintWriter p_writer : activeUsers.values()) {
+        		p_writer.println(message);
+        	}
+        }
+        
+        private void sendPrivateMessage(String sender, String recipient, String message) {
+        	PrintWriter recipientWriter = activeUsers.get(recipient);
+        	if (recipientWriter != null) {
+        		recipientWriter.println("Private from " + sender + ": " + message);
+        		
+        	}else {
+        		writer.println("ERROR: User " + recipient + " not found.");
+        		return;
+        	}
         }
 
         private void sendActiveMembers() {
@@ -189,6 +202,16 @@ public class MultiThreadServerCLI {
             } catch (IOException e) {
                 System.err.println("Error saving chat.");
             }
+        }
+        private void cleanup() {
+        	if (userId != null) {
+        		activeUsers.remove(userId);
+        	}
+        	try {
+        		socket.close();
+        	}catch (IOException e) {
+        		System.err.println("Error closing socket.");
+        	}
         }
     }
 }
